@@ -1,0 +1,119 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "actions": {
+      "Parse_JSON": {
+        "inputs": {
+          "content": "@decodeBase64(triggerBody()?['ContentData'])",
+          "schema": {
+            "properties": {
+              "alarm_timestamp": {
+                "type": "string"
+              },
+              "angle": {
+                "type": "number"
+              },
+              "date": {
+                "type": "string"
+              },
+              "deviceid": {
+                "type": "string"
+              },
+              "humidity": {
+                "type": "number"
+              },
+              "rpm": {
+                "type": "number"
+              },
+              "temperature": {
+                "type": "number"
+              },
+              "winddirection": {
+                "type": "string"
+              },
+              "window": {
+                "type": "string"
+              },
+              "windspeed": {
+                "type": "number"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "runAfter": {},
+        "type": "ParseJson"
+      },
+      "Post_a_message_(V3)": {
+        "inputs": {
+          "body": {
+            "body": {
+              "content": "<p>{<br>\n&nbsp;<span style=\"color: rgb(26,188,156)\">&nbsp;\"</span><span style=\"color: rgb(26,188,156)\"><strong>date</strong></span><span style=\"color: rgb(26,188,156)\">\" : </span>@{body('Parse_JSON')?['date']},<br>\n&nbsp;<span style=\"color: rgb(26,188,156)\">&nbsp;\"</span><span style=\"color: rgb(26,188,156)\"><strong>deviceid</strong></span><span style=\"color: rgb(26,188,156)\">\" : </span>@{body('Parse_JSON')?['deviceid']},<br>\n&nbsp;&nbsp;<span style=\"color: rgb(26,188,156)\">\"</span><span style=\"color: rgb(26,188,156)\"><strong>window</strong></span><span style=\"color: rgb(26,188,156)\">\" : </span>@{body('Parse_JSON')?['window']},<br>\n&nbsp;&nbsp;<span style=\"color: rgb(26,188,156)\">\"</span><span style=\"color: rgb(26,188,156)\"><strong>rpm</strong></span><span style=\"color: rgb(26,188,156)\">\" : </span>@{body('Parse_JSON')?['rpm']},<br>\n<span style=\"color: rgb(26,188,156)\">&nbsp;&nbsp;\"</span><span style=\"color: rgb(26,188,156)\"><strong>angle</strong></span><span style=\"color: rgb(26,188,156)\">\" : </span>@{body('Parse_JSON')?['angle']},<br>\n&nbsp;<span style=\"color: rgb(26,188,156)\">&nbsp;\"</span><span style=\"color: rgb(26,188,156)\"><strong>temperature</strong></span><span style=\"color: rgb(26,188,156)\">\" : </span>@{body('Parse_JSON')?['temperature']},<br>\n&nbsp;&nbsp;<span style=\"color: rgb(26,188,156)\">\"</span><span style=\"color: rgb(26,188,156)\"><strong>humidity</strong></span><span style=\"color: rgb(26,188,156)\">\": </span> @{body('Parse_JSON')?['humidity']},<br>\n&nbsp;&nbsp;<span style=\"color: rgb(26,188,156)\">\"</span><span style=\"color: rgb(26,188,156)\"><strong>windspeed</strong></span><span style=\"color: rgb(26,188,156)\">\" : </span>@{body('Parse_JSON')?['windspeed']},<br>\n&nbsp;&nbsp;<span style=\"color: rgb(26,188,156)\">\"</span><span style=\"color: rgb(26,188,156)\"><strong>winddirection</strong></span><span style=\"color: rgb(26,188,156)\">\" </span>: @{body('Parse_JSON')?['winddirection']},<br>\n&nbsp;&nbsp;<span style=\"color: rgb(26,188,156)\">\"</span><span style=\"color: rgb(26,188,156)\"><strong>alarm_timestamp</strong></span><span style=\"color: rgb(26,188,156)\">\" </span>: @{body('Parse_JSON')?['alarm_timestamp']}<br>\n}</p>",
+              "contentType": "html"
+            },
+            "subject": "Alarm Triggered: @{body('Parse_JSON')?['alarm_timestamp']}"
+          },
+          "host": {
+            "connection": {
+              "name": "@parameters('$connections')['teams']['connectionId']"
+            }
+          },
+          "method": "post",
+          "path": "/v3/beta/teams/@{encodeURIComponent('a63d430e-c3bb-44e4-9542-5f1dbe4fcba9')}/channels/@{encodeURIComponent('19:358e0b2a30c14950913d9867f1b135b8@thread.tacv2')}/messages"
+        },
+        "runAfter": {
+          "Parse_JSON": ["Succeeded"]
+        },
+        "type": "ApiConnection"
+      }
+    },
+    "contentVersion": "1.0.0.0",
+    "outputs": {},
+    "parameters": {
+      "$connections": {
+        "defaultValue": {},
+        "type": "Object"
+      }
+    },
+    "triggers": {
+      "When_events_are_available_in_Event_Hub": {
+        "inputs": {
+          "host": {
+            "connection": {
+              "name": "@parameters('$connections')['eventhubs']['connectionId']"
+            }
+          },
+          "method": "get",
+          "path": "/@{encodeURIComponent('alarms')}/events/batch/head",
+          "queries": {
+            "consumerGroupName": "$Default",
+            "contentType": "application/octet-stream",
+            "maximumEventsCount": 50
+          }
+        },
+        "recurrence": {
+          "frequency": "Second",
+          "interval": 10
+        },
+        "splitOn": "@triggerBody()",
+        "type": "ApiConnection"
+      }
+    }
+  },
+  "parameters": {
+    "$connections": {
+      "value": {
+        "eventhubs": {
+          "connectionId": "/subscriptions/<your--subscription--name>/resourceGroups/<your--resource--group>/providers/Microsoft.Web/connections/eventhubs",
+          "connectionName": "eventhubs",
+          "id": "/subscriptions/<your--subscription--name>/providers/Microsoft.Web/locations/canadacentral/managedApis/eventhubs"
+        },
+        "teams": {
+          "connectionId": "/subscriptions/<your--subscription--name>/resourceGroups/<your--resource--group>/providers/Microsoft.Web/connections/teams",
+          "connectionName": "teams",
+          "id": "/subscriptions/<your--subscription--name>/providers/Microsoft.Web/locations/canadacentral/managedApis/teams"
+        }
+      }
+    }
+  }
+}

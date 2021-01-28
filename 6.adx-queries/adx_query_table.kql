@@ -1,0 +1,14 @@
+﻿// weather_raw
+iot_stream
+| where isnotnull(temperature)
+| project timestamp, deviceId , temperature, humidity, windspeed, winddirection
+
+// turbine_raw
+iot_stream
+| where isnull(temperature)
+| project timestamp, deviceId , rpm , angle
+
+//alarm
+alarms
+| sort by alarm_timestamp desc
+| where alarm_timestamp between (now(-20m) .. now())
